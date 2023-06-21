@@ -381,12 +381,9 @@ func (p *StaticPolicy) getResourceAllocationAnnotations(podAnnotations map[strin
 	resourceAllocationAnnotations := map[string]string{
 		p.ipv4ResourceAllocationAnnotationKey:             strings.Join(selectedNIC.GetNICIPs(machine.IPVersionV4), IPsSeparator),
 		p.ipv6ResourceAllocationAnnotationKey:             strings.Join(selectedNIC.GetNICIPs(machine.IPVersionV6), IPsSeparator),
+		p.netNSPathResourceAllocationAnnotationKey:        selectedNIC.NSAbsolutePath,
 		p.netInterfaceNameResourceAllocationAnnotationKey: selectedNIC.Iface,
 		p.netClassIDResourceAllocationAnnotationKey:       fmt.Sprintf("%d", netClsID),
-	}
-
-	if len(selectedNIC.NSAbsolutePath) > 0 {
-		resourceAllocationAnnotations[p.netNSPathResourceAllocationAnnotationKey] = selectedNIC.NSAbsolutePath
 	}
 
 	return resourceAllocationAnnotations, nil
