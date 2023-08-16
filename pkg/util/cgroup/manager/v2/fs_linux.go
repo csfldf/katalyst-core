@@ -161,6 +161,38 @@ func (m *manager) ApplyNetCls(_ string, _ *common.NetClsData) error {
 	return errors.New("cgroups v2 does not support net_cls cgroup, please use eBPF via external manager")
 }
 
+func (m *manager) ApplyIOCostQoS(absCgroupPath string, devID string, data *common.IOCostQoSData) error {
+	if data == nil {
+		return fmt.Errorf("ApplyIOCostQoS got nil data")
+	}
+
+	dataContent := data.String()
+	if err, applied, oldData := common.WriteFileIfChange(absCgroupPath, "io.cost.qos", fmt.Sprintf("%s %s", devID, dataContent)); err != nil {
+		return err
+	} else if applied {
+		klog.Infof("[CgroupV2] apply io.cost.qos data successfully,"+
+			"cgroupPath: %s, data: %s, old data: %s\n", absCgroupPath, dataContent, oldData)
+	}
+
+	return nil
+}
+
+func (m *manager) ApplyIOCostModel(absCgroupPath string, devID string, data *common.IOCostModelData) error {
+	if data == nil {
+		return fmt.Errorf("ApplyIOCostModel got nil data")
+	}
+
+	dataContent := data.String()
+	if err, applied, oldData := common.WriteFileIfChange(absCgroupPath, "io.cost.model", fmt.Sprintf("%s %s", devID, dataContent)); err != nil {
+		return err
+	} else if applied {
+		klog.Infof("[CgroupV2] apply io.cost.model data successfully,"+
+			"cgroupPath: %s, data: %s, old data: %s\n", absCgroupPath, dataContent, oldData)
+	}
+
+	return nil
+}
+
 func (m *manager) ApplyUnifiedData(absCgroupPath, cgroupFileName, data string) error {
 	if err, applied, oldData := common.WriteFileIfChange(absCgroupPath, cgroupFileName, data); err != nil {
 		return err

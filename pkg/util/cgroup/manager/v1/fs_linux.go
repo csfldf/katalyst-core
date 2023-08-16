@@ -20,6 +20,7 @@ limitations under the License.
 package v1
 
 import (
+	"errors"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -176,6 +177,14 @@ func (m *manager) ApplyNetCls(absCgroupPath string, data *common.NetClsData) err
 	}
 
 	return nil
+}
+
+func (m *manager) ApplyIOCostQoS(absCgroupPath string, devID string, data *common.IOCostQoSData) error {
+	return errors.New("cgroups v1 does not support io.cost.qos")
+}
+
+func (m *manager) ApplyIOCostModel(absCgroupPath string, devID string, data *common.IOCostModelData) error {
+	return errors.New("cgroups v1 does not support io.cost.model")
 }
 
 func (m *manager) ApplyUnifiedData(absCgroupPath, cgroupFileName, data string) error {
