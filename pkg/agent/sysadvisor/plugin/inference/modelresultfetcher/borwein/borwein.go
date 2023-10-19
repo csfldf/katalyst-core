@@ -240,19 +240,19 @@ func (bmrf *BorweinModelResultFetcher) getInferenceRequestForPods(pods []*v1.Pod
 			continue
 		}
 
-		req.PodRequestEntries[string(pod.UID)] = &borweininfsvc.ContainerRequestEntries{
-			ContainerFeatureValues: make(map[string]*borweininfsvc.FeatureValues, len(pod.Spec.Containers)),
-		}
-
+		foundContainerCnt := 0
 		foundMainContainer := false
 		for i := 0; i < len(pod.Spec.Containers); i++ {
 			containerName := pod.Spec.Containers[i].Name
 			containerInfo, ok := metaReader.GetContainerInfo(string(pod.UID), containerName)
 
 			if !ok {
-				return nil, fmt.Errorf("GetContainerInfo for pod: %s/%s, container: %s failed",
+				general.Warningf("GetContainerInfo for pod: %s/%s, container: %s failed",
 					pod.Namespace, pod.Name, containerName)
+				continue
 			}
+
+			foundContainerCnt += 1
 
 			if containerInfo.ContainerType == v1alpha1.ContainerType_MAIN {
 
@@ -280,6 +280,12 @@ func (bmrf *BorweinModelResultFetcher) getInferenceRequestForPods(pods []*v1.Pod
 					unionFeatureValues.Values = append(unionFeatureValues.Values, containerFeatureValue)
 				}
 
+				if req.PodRequestEntries[string(pod.UID)] == nil {
+					req.PodRequestEntries[string(pod.UID)] = &borweininfsvc.ContainerRequestEntries{
+						ContainerFeatureValues: make(map[string]*borweininfsvc.FeatureValues, len(pod.Spec.Containers)),
+					}
+				}
+
 				req.PodRequestEntries[string(pod.UID)].ContainerFeatureValues[containerName] = unionFeatureValues
 				break
 			}
@@ -287,7 +293,7 @@ func (bmrf *BorweinModelResultFetcher) getInferenceRequestForPods(pods []*v1.Pod
 
 		// todo: currently only inference for main container,
 		// maybe supporting sidecar later
-		if !foundMainContainer {
+		if foundContainerCnt > 0 && !foundMainContainer {
 			return nil, fmt.Errorf("main container isn't found for pod: %s/%s", pod.Namespace, pod.Name)
 		}
 	}
