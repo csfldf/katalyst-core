@@ -300,6 +300,8 @@ func (p *StaticPolicy) RemovePod(_ context.Context,
 		return nil, fmt.Errorf("RemovePod got nil req")
 	}
 
+	general.InfoS("called", "podUID", req.PodUid)
+
 	p.Lock()
 	defer p.Unlock()
 
@@ -917,6 +919,7 @@ func (p *StaticPolicy) getResourceAllocationAnnotations(podAnnotations map[strin
 }
 
 func (p *StaticPolicy) removePod(podUID string) error {
+	general.InfoS("try clear net cls id", "podUID", podUID)
 	if p.CgroupV2Env {
 		cgIDList, err := p.metaServer.ExternalManager.ListCgroupIDsForPod(podUID)
 		if err != nil {
@@ -937,6 +940,8 @@ func (p *StaticPolicy) removePod(podUID string) error {
 		}
 	}
 
+	general.InfoS("clear net cls id finished", "podUID", podUID)
+
 	// update state cache
 	podEntries := p.state.GetPodEntries()
 	delete(podEntries, podUID)
@@ -949,6 +954,8 @@ func (p *StaticPolicy) removePod(podUID string) error {
 
 	p.state.SetPodEntries(podEntries)
 	p.state.SetMachineState(machineState)
+
+	general.InfoS("update state finished", "podUID", podUID)
 
 	return nil
 }

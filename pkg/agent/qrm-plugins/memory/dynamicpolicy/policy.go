@@ -463,12 +463,16 @@ func (p *DynamicPolicy) RemovePod(ctx context.Context,
 		}
 	}
 
+	general.InfoS("try to call remove pod to advisor", "podUID", req.PodUid)
+
 	if p.enableMemoryAdvisor {
 		_, err = p.advisorClient.RemovePod(ctx, &advisorsvc.RemovePodRequest{PodUid: req.PodUid})
 		if err != nil {
 			return nil, fmt.Errorf("remove pod in QoS aware server failed with error: %v", err)
 		}
 	}
+
+	general.InfoS("call remove pod to advisor finished", "podUID", req.PodUid)
 
 	err = p.removePod(req.PodUid)
 	if err != nil {
@@ -477,10 +481,14 @@ func (p *DynamicPolicy) RemovePod(ctx context.Context,
 		return nil, err
 	}
 
+	general.InfoS("try adjustAllocationEntries", "podUID", req.PodUid)
+
 	aErr := p.adjustAllocationEntries()
 	if aErr != nil {
 		general.ErrorS(aErr, "adjustAllocationEntries failed", "podUID", req.PodUid)
 	}
+
+	general.InfoS("adjustAllocationEntries finished", "podUID", req.PodUid)
 
 	return &pluginapi.RemovePodResponse{}, nil
 }
@@ -796,14 +804,20 @@ func (p *DynamicPolicy) removePod(podUID string) error {
 		delete(podEntries, podUID)
 	}
 
+	general.InfoS("try to GenerateMachineStateFromPodEntries", "podUID", podUID)
+
 	resourcesMachineState, err := state.GenerateMachineStateFromPodEntries(p.state.GetMachineInfo(), podResourceEntries, p.state.GetReservedMemory())
 	if err != nil {
 		general.Errorf("pod: %s, GenerateMachineStateFromPodEntries failed with error: %v", podUID, err)
 		return fmt.Errorf("calculate machineState by updated pod entries failed with error: %v", err)
 	}
 
+	general.InfoS("GenerateMachineStateFromPodEntries finished", "podUID", podUID)
+
 	p.state.SetPodResourceEntries(podResourceEntries)
 	p.state.SetMachineState(resourcesMachineState)
+
+	general.InfoS("set state finished", "podUID", podUID)
 	return nil
 }
 

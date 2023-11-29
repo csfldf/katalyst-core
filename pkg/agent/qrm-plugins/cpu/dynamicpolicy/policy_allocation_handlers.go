@@ -581,20 +581,28 @@ func (p *DynamicPolicy) adjustPoolsAndIsolatedEntries(poolsQuantityMap map[strin
 	isolatedQuantityMap map[string]map[string]int, entries state.PodEntries, machineState state.NUMANodeMap) error {
 	availableCPUs := machineState.GetFilteredAvailableCPUSet(p.reservedCPUs, nil, state.CheckDedicatedNUMABinding)
 
+	general.InfoS("[removePod] try to generatePoolsAndIsolation")
+
 	poolsCPUSet, isolatedCPUSet, err := p.generatePoolsAndIsolation(poolsQuantityMap, isolatedQuantityMap, availableCPUs)
 	if err != nil {
 		return fmt.Errorf("generatePoolsAndIsolation failed with error: %v", err)
 	}
+
+	general.InfoS("[removePod] try to reclaimOverlapNUMABinding")
 
 	err = p.reclaimOverlapNUMABinding(poolsCPUSet, entries)
 	if err != nil {
 		return fmt.Errorf("reclaimOverlapNUMABinding failed with error: %v", err)
 	}
 
+	general.InfoS("[removePod] try to applyPoolsAndIsolatedInfo")
+
 	err = p.applyPoolsAndIsolatedInfo(poolsCPUSet, isolatedCPUSet, entries, machineState)
 	if err != nil {
 		return fmt.Errorf("applyPoolsAndIsolatedInfo failed with error: %v", err)
 	}
+
+	general.InfoS("[removePod] try to cleanPools")
 
 	err = p.cleanPools()
 	if err != nil {
@@ -835,8 +843,11 @@ func (p *DynamicPolicy) applyPoolsAndIsolatedInfo(poolsCPUSet map[string]machine
 	if err != nil {
 		return fmt.Errorf("calculate machineState by newPodEntries failed with error: %v", err)
 	}
+
+	general.InfoS("[removePod] try to set state")
 	p.state.SetPodEntries(newPodEntries)
 	p.state.SetMachineState(machineState)
+	general.InfoS("[removePod] set state finished")
 
 	return nil
 }

@@ -425,8 +425,12 @@ func (p *DynamicPolicy) adjustAllocationEntries() error {
 		return fmt.Errorf("calculate machineState by updated pod entries failed with error: %v", err)
 	}
 
+	general.InfoS("[removePod] try to set state")
+
 	p.state.SetPodResourceEntries(podResourceEntries)
 	p.state.SetMachineState(resourcesMachineState)
+
+	general.InfoS("[removePod] set state finished")
 
 	// drop cache and migrate pages for containers whose numaset changed
 	for podUID, containers := range numaSetChangedContainers {

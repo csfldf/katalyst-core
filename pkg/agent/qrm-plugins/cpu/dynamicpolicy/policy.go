@@ -807,6 +807,8 @@ func (p *DynamicPolicy) RemovePod(ctx context.Context,
 		}
 	}()
 
+	general.InfoS("try to call remove pod to advisor", "podUID", req.PodUid)
+
 	if p.enableCPUAdvisor {
 		_, err = p.advisorClient.RemovePod(ctx, &advisorsvc.RemovePodRequest{PodUid: req.PodUid})
 		if err != nil {
@@ -814,16 +816,22 @@ func (p *DynamicPolicy) RemovePod(ctx context.Context,
 		}
 	}
 
+	general.InfoS("call remove pod to advisor finished", "podUID", req.PodUid)
+
 	err = p.removePod(req.PodUid)
 	if err != nil {
 		general.ErrorS(err, "remove pod failed with error", "podUID", req.PodUid)
 		return nil, err
 	}
 
+	general.InfoS("try adjustAllocationEntries", "podUID", req.PodUid)
+
 	aErr := p.adjustAllocationEntries()
 	if aErr != nil {
 		general.ErrorS(aErr, "adjustAllocationEntries failed", "podUID", req.PodUid)
 	}
+
+	general.InfoS("adjustAllocationEntries finished", "podUID", req.PodUid)
 
 	return &pluginapi.RemovePodResponse{}, nil
 }
@@ -835,13 +843,19 @@ func (p *DynamicPolicy) removePod(podUID string) error {
 	}
 	delete(podEntries, podUID)
 
+	general.InfoS("try to generateMachineStateFromPodEntries", "podUID", podUID)
+
 	updatedMachineState, err := generateMachineStateFromPodEntries(p.machineInfo.CPUTopology, podEntries)
 	if err != nil {
 		return fmt.Errorf("GenerateMachineStateFromPodEntries failed with error: %v", err)
 	}
 
+	general.InfoS("generateMachineStateFromPodEntries finished", "podUID", podUID)
+
 	p.state.SetPodEntries(podEntries)
 	p.state.SetMachineState(updatedMachineState)
+
+	general.InfoS("set state finished", "podUID", podUID)
 	return nil
 }
 
