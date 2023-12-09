@@ -63,6 +63,8 @@ func (m *EvictionManger) getNodeTaintsFromConditions() []v1.Taint {
 			continue
 		} else if condition.ConditionType != pluginapi.ConditionType_NODE_CONDITION {
 			continue
+		} else if conditionName == "CPUPressure" {
+			continue
 		}
 
 		vis := make(map[string]bool)
