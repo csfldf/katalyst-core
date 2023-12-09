@@ -203,7 +203,6 @@ func (p *CPUPressureLoadEviction) ThresholdMet(_ context.Context,
 				},
 			}, nil
 		} else if isSoftOver {
-			softThresholdMetPoolName = poolName
 		}
 	}
 
