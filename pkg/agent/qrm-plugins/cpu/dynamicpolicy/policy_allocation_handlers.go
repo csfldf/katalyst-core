@@ -26,6 +26,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	pluginapi "k8s.io/kubelet/pkg/apis/resourceplugin/v1alpha1"
 
+	"github.com/kubewharf/katalyst-api/pkg/consts"
 	apiconsts "github.com/kubewharf/katalyst-api/pkg/consts"
 	"github.com/kubewharf/katalyst-core/pkg/agent/qrm-plugins/cpu/dynamicpolicy/calculator"
 	advisorapi "github.com/kubewharf/katalyst-core/pkg/agent/qrm-plugins/cpu/dynamicpolicy/cpuadvisor"
@@ -101,6 +102,10 @@ func (p *DynamicPolicy) sharedCoresAllocationHandler(_ context.Context,
 			QoSLevel:                         apiconsts.PodAnnotationQoSLevelSharedCores,
 			RequestQuantity:                  reqFloat64,
 		}
+
+		delete(allocationInfo.Annotations, "numa_hint")
+		delete(allocationInfo.Annotations, consts.PodAnnotationMemoryEnhancementNumaBinding)
+		delete(allocationInfo.Annotations, consts.PodAnnotationMemoryEnhancementNumaExclusive)
 
 		if !shouldRampUp {
 			targetPoolName := allocationInfo.GetSpecifiedPoolName()
@@ -805,7 +810,7 @@ func (p *DynamicPolicy) applyPoolsAndIsolatedInfo(poolsCPUSet map[string]machine
 				newPodEntries[podUID][containerName].OriginalTopologyAwareAssignments = machine.DeepcopyCPUAssignment(rampUpCPUsTopologyAwareAssignments)
 
 			case apiconsts.PodAnnotationQoSLevelSharedCores, apiconsts.PodAnnotationQoSLevelReclaimedCores:
-				ownerPoolName := allocationInfo.GetPoolName()
+				ownerPoolName := allocationInfo.GetSpecifiedPoolName()
 
 				if allocationInfo.RampUp {
 					general.Infof("pod: %s/%s container: %s is in ramp up, set its allocation result from %s to rampUpCPUs :%s",
@@ -832,6 +837,12 @@ func (p *DynamicPolicy) applyPoolsAndIsolatedInfo(poolsCPUSet map[string]machine
 					newPodEntries[podUID][containerName].OriginalAllocationResult = poolEntry.OriginalAllocationResult.Clone()
 					newPodEntries[podUID][containerName].TopologyAwareAssignments = machine.DeepcopyCPUAssignment(poolEntry.TopologyAwareAssignments)
 					newPodEntries[podUID][containerName].OriginalTopologyAwareAssignments = machine.DeepcopyCPUAssignment(poolEntry.TopologyAwareAssignments)
+				}
+
+				if allocationInfo.QoSLevel == apiconsts.PodAnnotationQoSLevelSharedCores {
+					delete(newPodEntries[podUID][containerName].Annotations, "numa_hint")
+					delete(newPodEntries[podUID][containerName].Annotations, consts.PodAnnotationMemoryEnhancementNumaBinding)
+					delete(newPodEntries[podUID][containerName].Annotations, consts.PodAnnotationMemoryEnhancementNumaExclusive)
 				}
 			default:
 				return fmt.Errorf("invalid qosLevel: %s for pod: %s/%s container: %s",

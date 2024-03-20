@@ -148,7 +148,7 @@ func GetSharedQuantityMapFromPodEntries(podEntries PodEntries, ignoreAllocationI
 				}
 			}
 
-			if poolName := allocationInfo.GetOwnerPoolName(); poolName != advisorapi.EmptyOwnerPoolName {
+			if poolName := allocationInfo.GetSpecifiedPoolName(); poolName != advisorapi.EmptyOwnerPoolName {
 				preciseQuantityMap[poolName] += GetContainerRequestedCores()(allocationInfo)
 			}
 		}
