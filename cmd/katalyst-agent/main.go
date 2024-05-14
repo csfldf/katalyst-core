@@ -19,6 +19,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/spf13/pflag"
 	cliflag "k8s.io/component-base/cli/flag"
@@ -30,6 +31,8 @@ import (
 )
 
 func main() {
+	runtime.SetMutexProfileFraction(1)
+
 	opt := options.NewOptions()
 	fss := &cliflag.NamedFlagSets{}
 	opt.AddFlags(fss)
