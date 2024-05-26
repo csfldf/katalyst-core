@@ -204,8 +204,15 @@ func (p *DynamicPolicy) clearResidualState(_ *coreconfig.Configuration,
 		podSet.Insert(fmt.Sprintf("%v", pod.UID))
 	}
 
+	beginTime := time.Now()
+	general.InfoS("debug called", "beginTime", beginTime.String())
 	p.Lock()
-	defer p.Unlock()
+	keepTime := time.Now()
+	general.InfoS("debug locked", "waitLockSeconds", time.Now().Sub(beginTime).Seconds(), "beginTime", beginTime.String())
+	defer func() {
+		p.Unlock()
+		general.InfoS("debug unlocked", "keepLockSeconds", time.Now().Sub(keepTime).Seconds(), "beginTime", beginTime.String())
+	}()
 
 	podEntries := p.state.GetPodEntries()
 	for podUID, containerEntries := range podEntries {

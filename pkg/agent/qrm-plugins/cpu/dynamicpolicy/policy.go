@@ -413,9 +413,16 @@ func (p *DynamicPolicy) GetResourcesAllocation(_ context.Context,
 		return nil, fmt.Errorf("GetResourcesAllocation got nil req")
 	}
 
-	general.Infof("called")
+	beginTime := time.Now()
+	general.InfoS("debug called", "beginTime", beginTime.String())
+
 	p.Lock()
-	defer p.Unlock()
+	keepTime := time.Now()
+	general.InfoS("debug locked", "waitLockSeconds", time.Now().Sub(beginTime).Seconds(), "beginTime", beginTime.String())
+	defer func() {
+		p.Unlock()
+		general.InfoS("debug unlocked", "keepLockSeconds", time.Now().Sub(keepTime).Seconds(), "beginTime", beginTime.String())
+	}()
 
 	podEntries := p.state.GetPodEntries()
 	machineState := p.state.GetMachineState()
@@ -516,9 +523,16 @@ func (p *DynamicPolicy) GetTopologyAwareResources(_ context.Context,
 		return nil, fmt.Errorf("GetTopologyAwareResources got nil req")
 	}
 
-	general.Infof("called")
+	beginTime := time.Now()
+	general.InfoS("debug called", "beginTime", beginTime.String())
+
 	p.RLock()
-	defer p.RUnlock()
+	keepTime := time.Now()
+	general.InfoS("debug locked", "waitLockSeconds", time.Now().Sub(beginTime).Seconds(), "beginTime", beginTime.String())
+	defer func() {
+		p.RUnlock()
+		general.InfoS("debug unlocked", "keepLockSeconds", time.Now().Sub(keepTime).Seconds(), "beginTime", beginTime.String())
+	}()
 
 	allocationInfo := p.state.GetAllocationInfo(req.PodUid, req.ContainerName)
 	if allocationInfo == nil {
@@ -838,11 +852,15 @@ func (p *DynamicPolicy) RemovePod(ctx context.Context,
 	if req == nil {
 		return nil, fmt.Errorf("RemovePod got nil req")
 	}
-	general.InfoS("called", "podUID", req.PodUid)
+	beginTime := time.Now()
+	general.InfoS("debug called", "podUID", req.PodUid, "beginTime", beginTime.String())
 
 	p.Lock()
+	keepTime := time.Now()
+	general.InfoS("debug locked", "podUID", req.PodUid, "waitLockSeconds", time.Now().Sub(beginTime).Seconds(), "beginTime", beginTime.String())
 	defer func() {
 		p.Unlock()
+		general.InfoS("debug unlocked", "podUID", req.PodUid, "keepLockSeconds", time.Now().Sub(keepTime).Seconds(), "beginTime", beginTime.String())
 		if err != nil {
 			general.ErrorS(err, "remove pod failed with error", "podUID", req.PodUid)
 			_ = p.emitter.StoreInt64(util.MetricNameRemovePodFailed, 1, metrics.MetricTypeNameRaw)
