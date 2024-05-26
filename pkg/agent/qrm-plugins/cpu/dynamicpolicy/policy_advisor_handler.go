@@ -256,11 +256,15 @@ func (p *DynamicPolicy) allocateByCPUAdvisor(resp *advisorapi.ListAndWatchRespon
 		return fmt.Errorf("allocateByCPUAdvisor got nil qos aware lw response")
 	}
 
-	general.Infof("allocateByCPUAdvisor is called")
+	beginTime := time.Now()
+	general.InfoS("debug allocateByCPUAdvisor is called", "beginTime", beginTime.String())
 	_ = p.emitter.StoreInt64(util.MetricNameHandleAdvisorRespCalled, 1, metrics.MetricTypeNameRaw)
 	p.Lock()
+	keepTime := time.Now()
+	general.InfoS("debug locked", "waitLockSeconds", time.Now().Sub(beginTime).Seconds(), "beginTime", beginTime.String())
 	defer func() {
 		p.Unlock()
+		general.InfoS("debug unlocked", "keepLockSeconds", time.Now().Sub(keepTime).Seconds(), "beginTime", beginTime.String())
 		if err != nil {
 			_ = p.emitter.StoreInt64(util.MetricNameHandleAdvisorRespFailed, 1, metrics.MetricTypeNameRaw)
 		}

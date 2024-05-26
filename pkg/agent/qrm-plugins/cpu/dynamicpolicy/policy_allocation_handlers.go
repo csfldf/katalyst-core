@@ -676,6 +676,7 @@ func (p *DynamicPolicy) putAllocationsAndAdjustAllocationEntries(allocationInfos
 
 // adjustAllocationEntries calculates and generates the latest checkpoint
 func (p *DynamicPolicy) adjustAllocationEntries() error {
+	general.InfoS("debug-inner try to get quantity map")
 	entries := p.state.GetPodEntries()
 	machineState := p.state.GetMachineState()
 
@@ -698,6 +699,7 @@ func (p *DynamicPolicy) adjustAllocationEntries() error {
 		}
 	}
 	isolatedQuantityMap := state.GetIsolatedQuantityMapFromPodEntries(entries, nil)
+	general.InfoS("debug-inner get quantity map successfully")
 
 	err := p.adjustPoolsAndIsolatedEntries(poolsQuantityMap, isolatedQuantityMap, entries, machineState)
 	if err != nil {
@@ -717,21 +719,25 @@ func (p *DynamicPolicy) adjustPoolsAndIsolatedEntries(poolsQuantityMap map[strin
 ) error {
 	availableCPUs := machineState.GetFilteredAvailableCPUSet(p.reservedCPUs, nil, state.CheckDedicatedNUMABinding)
 
+	general.InfoS("debug-inner try to generatePoolsAndIsolation")
 	poolsCPUSet, isolatedCPUSet, err := p.generatePoolsAndIsolation(poolsQuantityMap, isolatedQuantityMap, availableCPUs)
 	if err != nil {
 		return fmt.Errorf("generatePoolsAndIsolation failed with error: %v", err)
 	}
+	general.InfoS("generatePoolsAndIsolation successfully")
 
 	err = p.reclaimOverlapNUMABinding(poolsCPUSet, entries)
 	if err != nil {
 		return fmt.Errorf("reclaimOverlapNUMABinding failed with error: %v", err)
 	}
 
+	general.InfoS("debug-inner try to applyPoolsAndIsolatedInfo")
 	err = p.applyPoolsAndIsolatedInfo(poolsCPUSet, isolatedCPUSet, entries,
 		machineState, state.GetSharedBindingNUMAsFromQuantityMap(poolsQuantityMap))
 	if err != nil {
 		return fmt.Errorf("applyPoolsAndIsolatedInfo failed with error: %v", err)
 	}
+	general.InfoS("debug-inner applyPoolsAndIsolatedInfo successfully")
 
 	err = p.cleanPools()
 	if err != nil {
