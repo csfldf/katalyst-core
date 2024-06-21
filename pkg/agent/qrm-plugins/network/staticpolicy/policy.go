@@ -743,8 +743,8 @@ func (p *StaticPolicy) applyNetClass() {
 					return
 				}
 
-				general.Infof("apply net class successfully, pod: %s, container: %s(%s), netClsData: %+v",
-					podUID, containerName, containerID, *netClsData)
+				//general.Infof("apply net class successfully, pod: %s, container: %s(%s), netClsData: %+v",
+				//	podUID, containerName, containerID, *netClsData)
 			}(string(pod.UID), container.Name, netClsData)
 		}
 	}
